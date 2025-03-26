@@ -2,28 +2,86 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!19 &1
 Physics2DSettings:
+  # m_ObjectHideFlags: Internal Unity field, usually 0 for assets.
   m_ObjectHideFlags: 0
+
+  # serializedVersion: Internal versioning for this data structure. Helps Unity handle upgrades.
   serializedVersion: 6
-  m_Gravity: {x: 0, y: -9.81}
+
+  # --- Core Simulation Settings ---
+
+  # m_Gravity: The global gravity vector applied to all non-kinematic Rigidbodies with 'Use Gravity' enabled.
+  # Default is {x: 0, y: -9.81}. Let's make it feel a bit 'heavier'.
+  m_Gravity: {x: 0, y: -15.0}
+
+  # m_DefaultMaterial: The default PhysicsMaterial2D applied to all Collider2Ds that don't have one assigned.
+  # {fileID: 0} means 'None' by default. You could assign a default bouncy or friction material here.
   m_DefaultMaterial: {fileID: 0}
-  m_VelocityIterations: 8
-  m_PositionIterations: 3
-  m_BounceThreshold: 1
-  m_MaxLinearCorrection: 0.2
-  m_MaxAngularCorrection: 8
-  m_MaxTranslationSpeed: 100
-  m_MaxRotationSpeed: 360
-  m_BaumgarteScale: 0.2
-  m_BaumgarteTimeOfImpactScale: 0.75
-  m_TimeToSleep: 0.5
-  m_LinearSleepTolerance: 0.01
-  m_AngularSleepTolerance: 2
-  m_DefaultContactOffset: 0.01
+
+  # --- Solver Settings ---
+  # These control the accuracy and stability of the physics simulation, especially contacts and joints.
+  # Higher values generally mean more accuracy but higher CPU cost.
+
+  # m_VelocityIterations: How many times the solver iterates to resolve velocity constraints per step.
+  # Higher values improve joint stability and collision response. (Increased from 8)
+  m_VelocityIterations: 10
+  # m_PositionIterations: How many times the solver iterates to resolve position constraints (overlap) per step.
+  # Higher values reduce object overlap/penetration. (Increased from 3)
+  m_PositionIterations: 4
+
+  # --- Collision & Contact Settings ---
+
+  # m_BounceThreshold: The minimum relative velocity required for a collision to result in a bounce.
+  # Lower values make objects bounce even from small impacts. Higher values make them 'stick' more. (Increased from 1)
+  m_BounceThreshold: 1.5
+  # m_DefaultContactOffset: The distance Unity starts generating contacts between colliders.
+  # Smaller values can improve precision but might slightly increase CPU usage or cause jitter with fast objects if too small. (Slightly reduced from 0.01)
+  m_DefaultContactOffset: 0.008
+  # m_ContactThreshold: Internal threshold. Usually best left at default (0).
   m_ContactThreshold: 0
+
+  # --- Movement Limits ---
+
+  # m_MaxLinearCorrection: The maximum distance a Rigidbody can be moved by the solver in one step to correct overlap.
+  # Prevents objects from being pushed too far apart suddenly.
+  m_MaxLinearCorrection: 0.2
+  # m_MaxAngularCorrection: The maximum angle (in degrees) a Rigidbody can be rotated by the solver in one step.
+  m_MaxAngularCorrection: 8
+  # m_MaxTranslationSpeed: The maximum speed (units/second) any Rigidbody2D can reach. Useful for capping speeds. (Increased from 100)
+  m_MaxTranslationSpeed: 150
+  # m_MaxRotationSpeed: The maximum angular speed (degrees/second) any Rigidbody2D can reach. (Increased from 360)
+  m_MaxRotationSpeed: 720
+
+  # --- Sleeping Settings ---
+  # Sleeping allows inactive Rigidbodies to stop being simulated, saving CPU.
+
+  # m_TimeToSleep: The time (in seconds) a Rigidbody must be below the sleep tolerances before it *can* go to sleep. (Reduced from 0.5)
+  m_TimeToSleep: 0.4
+  # m_LinearSleepTolerance: The maximum linear velocity below which a Rigidbody is considered stationary for sleeping. (Reduced from 0.01)
+  m_LinearSleepTolerance: 0.008
+  # m_AngularSleepTolerance: The maximum angular velocity (degrees/second) below which a Rigidbody is considered stationary for sleeping. (Reduced from 2)
+  m_AngularSleepTolerance: 1.8
+
+  # --- Internal Solver Tuning ---
+  # Generally advanced, adjust with care.
+
+  # m_BaumgarteScale: Used for position correction strength during the solver step (0-1).
+  m_BaumgarteScale: 0.2
+  # m_BaumgarteTimeOfImpactScale: Used for position correction strength during Time of Impact (TOI) events (continuous collision).
+  m_BaumgarteTimeOfImpactScale: 0.75
+
+  # --- Job System (Performance) ---
+  # Settings related to using Unity's Job System for parallel physics processing.
+
   m_JobOptions:
     serializedVersion: 2
-    useMultithreading: 0
-    useConsistencySorting: 0
+    # useMultithreading: Enable physics calculations on worker threads. Can significantly improve performance on multi-core CPUs. (Changed to 1 - Enabled)
+    useMultithreading: 1
+    # useConsistencySorting: When multithreading, attempts to provide more deterministic results by sorting jobs. Minor performance cost. (Changed to 1 - Enabled)
+    useConsistencySorting: 1
+    # --- Job Batch Sizes (Advanced Performance Tuning) ---
+    # These control how many items are processed per job for different physics tasks.
+    # Defaults are generally okay; tuning requires profiling.
     m_InterpolationPosesPerJob: 100
     m_NewContactsPerJob: 30
     m_CollideContactsPerJob: 100
@@ -33,24 +91,61 @@ Physics2DSettings:
     m_SyncContinuousFixturesPerJob: 50
     m_FindNearestContactsPerJob: 100
     m_UpdateTriggerContactsPerJob: 100
+    # --- Island Solver Settings (Advanced Performance Tuning) ---
+    # Islands are groups of interacting bodies solved together. These tune the cost calculation for distributing island solving across jobs.
     m_IslandSolverCostThreshold: 100
     m_IslandSolverBodyCostScale: 1
     m_IslandSolverContactCostScale: 10
     m_IslandSolverJointCostScale: 10
     m_IslandSolverBodiesPerJob: 50
     m_IslandSolverContactsPerJob: 50
-  m_SimulationMode: 0
-  m_SimulationLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_MaxSubStepCount: 4
-  m_MinSubStepFPS: 30
-  m_UseSubStepping: 0
-  m_UseSubStepContacts: 0
+
+  # --- Simulation Timing & Sub-stepping ---
+
+  # m_SimulationMode: When the physics simulation runs.
+  # 0 = Update (Syncs with game logic loop - potentially variable timestep)
+  # 1 = FixedUpdate (Runs at a fixed interval - recommended for physics stability) (Changed to 1)
+  m_SimulationMode: 1
+  # m_UseSubStepping: Allow physics to simulate multiple smaller steps within a single graphics frame if the frame rate drops below m_MinSubStepFPS.
+  # Can improve stability at low frame rates but increases CPU load during those frames. (Changed to 1 - Enabled)
+  m_UseSubStepping: 1
+  # m_MaxSubStepCount: The maximum number of physics sub-steps allowed per graphics frame. (Increased from 4)
+  m_MaxSubStepCount: 6
+  # m_MinSubStepFPS: The target physics FPS. If the graphics FPS drops below this, sub-stepping may activate (if enabled). (Increased from 30)
+  m_MinSubStepFPS: 45
+  # m_UseSubStepContacts: Calculate contacts during each sub-step. More accurate but more expensive when sub-stepping. (Changed to 1 - Enabled)
+  m_UseSubStepContacts: 1
+
+  # --- Queries & Callbacks ---
+
+  # m_QueriesHitTriggers: Should physics queries (Raycasts, Overlap checks, etc.) detect Trigger colliders? (1 = Yes)
   m_QueriesHitTriggers: 1
+  # m_QueriesStartInColliders: Should physics queries detect colliders they start inside? (1 = Yes)
   m_QueriesStartInColliders: 1
+  # m_CallbacksOnDisable: Should OnCollisionExit2D/OnTriggerExit2D be called when the other object/collider is disabled or destroyed? (1 = Yes)
   m_CallbacksOnDisable: 1
+  # m_ReuseCollisionCallbacks: Can Unity reuse internal data structures for collision callbacks? Performance optimization. (1 = Yes)
   m_ReuseCollisionCallbacks: 1
-  m_AutoSyncTransforms: 0
-  m_GizmoOptions: 10
+  # m_AutoSyncTransforms: Automatically sync changes made directly to a Rigidbody's Transform component back to the physics simulation.
+  # Enabling this is convenient but has a performance cost. Disabling requires manual syncing if you move physics objects via Transform. (Changed to 1 - Enabled for convenience)
+  m_AutoSyncTransforms: 1
+
+  # --- Gizmos (Debugging Visualization) ---
+
+  # m_GizmoOptions: A bitmask controlling which physics gizmos are shown in the Scene view.
+  # Common bits: 1=Colliders, 2=Contacts, 4=Sleeping Bodies, 8=??? (maybe Joints or Centers of Mass depending on Unity version)
+  # Original value 10 (binary 1010) might be Colliders + Sleeping Bodies? Or Contacts + Sleeping Bodies? Check Scene Gizmo dropdown.
+  # Let's set it to 7 (binary 0111) = Show Colliders + Show Contacts + Show Sleeping Bodies for more debug info.
+  m_GizmoOptions: 7
+  # Note: Specific gizmo colors (ColliderAwakeColor, ColliderAsleepColor, etc.) might also exist but are often controlled implicitly or via editor preferences now.
+
+  # --- Layer Collision Matrix ---
+  # This defines which physics layers interact with which other layers. Crucial for performance and gameplay logic.
+  # The hex string represents a 32x32 matrix where each bit corresponds to an interaction pair (Layer A vs Layer B).
+  # 1 = Collide, 0 = Ignore.
+  # **IMPORTANT:** This is almost always edited visually via the matrix in:
+  # Project Settings -> Physics 2D -> Layer Collision Matrix
+  # Manually editing this string is complex and error-prone.
   m_LayerCollisionMatrix: bfe5f8ffbfe1f8ffbfe1f8ff87edf8ffb7e1f8ffb7e1f8ffc0c0f8bffffbf8ffbff9f8ff80e0f8ff09e0f8ff88e1f8ff8081f8ffbfaff8ffffcfffffffffffff00c0f9ff00c0faff00c0fcffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbfffffffffffffff
+  # Example: The 'f' characters often represent rows/columns where a layer collides with almost everything else by default.
+  # The '0' characters might represent layers set to ignore others.
