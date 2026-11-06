@@ -16,8 +16,6 @@ public class InventoryController : MonoBehaviour, IUIScreen
 
     public List<InventoryItem> initialItems = new List<InventoryItem>();
 
-    public bool isOpenInventory = false;
-
     private void Start()
     {
         PrepareUI();
@@ -155,21 +153,9 @@ public class InventoryController : MonoBehaviour, IUIScreen
             item.name, item.Description);
     }
 
-    //private void Update()
-    //{
-    //    if (Input.GetKeyDown(KeyCode.Tab))
-    //    {
-    //        UIManager.Instance.ToggleScreen(this);
-    //    }
-    //}
-
     public void Open()
     {
-        if (Mathf.Approximately(Time.timeScale, 0f))
-            return;
-
-        UIInventory.Instance.Show();
-        isOpenInventory = true;
+        inventoryUI.Show();
         foreach (var item in inventoryData.GetCurrentState())
         {
             inventoryUI.UpdateData(item.Key,
@@ -180,7 +166,6 @@ public class InventoryController : MonoBehaviour, IUIScreen
 
     public void Close()
     {
-        UIInventory.Instance.Hide();
-        isOpenInventory = false;
+        if (inventoryUI != null) inventoryUI.Hide();
     }
 }

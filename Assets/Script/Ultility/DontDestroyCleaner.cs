@@ -13,7 +13,8 @@ public class DontDestroyCleaner : MonoBehaviour
         GameObject[] rootObjects = ddolScene.GetRootGameObjects();
         foreach (GameObject obj in rootObjects)
         {
-            Destroy(obj);
+            if (!obj.TryGetComponent<InputManager>(out _))
+                Destroy(obj);
         }
     }
 }

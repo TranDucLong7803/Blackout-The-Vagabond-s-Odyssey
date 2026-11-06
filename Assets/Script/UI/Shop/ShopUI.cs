@@ -1,12 +1,10 @@
 using UnityEngine;
-using Zenject.Asteroids;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class ShopUI : MonoBehaviour
+public class ShopUI : MonoBehaviour, IUIScreen
 {
     public static ShopUI Instance { get; private set; }
-
-    public bool isOpenShop {  get; private set; }
-
 
     private void Awake()
     {
@@ -24,14 +22,28 @@ public class ShopUI : MonoBehaviour
 
     public void Show()
     {
-        isOpenShop = true;
+        var ui = UIManager.Instance;
+        if (ui != null && ui.OpenedScreen != this) ui.ToggleScreen(this);
+    }
+
+    public void Open()
+    {
         gameObject.SetActive(true);
         Time.timeScale = 0f;
+
+        var button = GetComponentInChildren<Button>();
+        if (button != null && EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(button.gameObject);
     }
 
     public void Hide()
     {
-        isOpenShop = false;
+        if (UIManager.Instance != null && UIManager.Instance.OpenedScreen == this)
+            UIManager.Instance.CloseCurrentScreen();
+    }
+
+    public void Close()
+    {
         gameObject.SetActive(false);
         Time.timeScale = 1f;
     }

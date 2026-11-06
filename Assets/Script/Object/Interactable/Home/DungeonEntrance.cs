@@ -1,5 +1,5 @@
-using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class DungeonEntrance : MonoBehaviour
@@ -9,36 +9,36 @@ public class DungeonEntrance : MonoBehaviour
     [SerializeField] private float delayHide = 0.2f;
     [SerializeField] private Vector3 animationOffset = new Vector3(0.25f,0.25f,0);
 
-    private bool isSubscribed = false;
+    private readonly HashSet<Collider2D> playerColliders = new();
+    private HomeMovement player;
+    private bool enteringDungeon;
 
-    void OnTriggerEnter2D(Collider2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (isSubscribed) return;
-        InputManager.Instance.playerInput.Ingame.Interact.performed += EnterDungeon;
-        isSubscribed = true;
+        var body = collision.attachedRigidbody;
+        if (body == null) return;
+
+        var movement = body.GetComponentInChildren<HomeMovement>();
+        if (movement == null) return;
+
+        player = movement;
+        playerColliders.Add(collision);
     }
 
-    void OnTriggerExit2D(Collider2D collision)
+    private void OnTriggerExit2D(Collider2D collision)
     {
-        if (!isSubscribed) return;
-        InputManager.Instance.playerInput.Ingame.Interact.performed -= EnterDungeon;
-        isSubscribed = false;
+        playerColliders.Remove(collision);
+        if (playerColliders.Count == 0) player = null;
     }
 
-    private void EnterDungeon(UnityEngine.InputSystem.InputAction.CallbackContext context)
+    private void Update()
     {
-        if (!isSubscribed) return;
-        InputManager.Instance.playerInput.Ingame.Interact.performed -= EnterDungeon;
-        isSubscribed = false;
-        var players = GameObject.FindObjectsByType<HomeMovement>(FindObjectsSortMode.None);
-        
-        foreach(var player in players)
-        {
-            player.enabled = false;
-            Instantiate(animationPrefab, player.transform.position + animationOffset, Quaternion.identity);
-            var sprite = player.transform.root.gameObject;
-            StartCoroutine(HidePlayer(sprite));
-        }
+        if (enteringDungeon || player == null || !InputManager.Instance.TryConsumeInteract()) return;
+
+        enteringDungeon = true;
+        player.enabled = false;
+        Instantiate(animationPrefab, player.transform.position + animationOffset, Quaternion.identity);
+        StartCoroutine(HidePlayer(player.transform.root.gameObject));
         StartCoroutine(LoadScene());
     }
 

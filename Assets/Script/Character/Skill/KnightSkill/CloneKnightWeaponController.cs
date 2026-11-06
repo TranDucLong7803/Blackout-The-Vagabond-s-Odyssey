@@ -10,13 +10,6 @@ public class CloneKnightWeaponController : MonoBehaviour
     public BaseWeapon baseWeapon { get; set; }
     public void Attack()
     {
-        if (ShopUI.Instance != null)
-        {
-            Debug.Log("Player ko ddc ban");
-            if (ShopUI.Instance.isOpenShop)
-                return;
-        }
-        Debug.Log("Player dc ban");
         baseWeapon.Attack();
     }
 

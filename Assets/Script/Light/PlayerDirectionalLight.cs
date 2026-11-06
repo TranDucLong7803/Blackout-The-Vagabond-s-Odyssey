@@ -23,7 +23,7 @@ public class PlayerDirectionalLight : MonoBehaviour
 
     void Update()
     {
-        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mousePosition = mainCamera.ScreenToWorldPoint(InputManager.PointerPosition);
         Vector2 direction = (Vector2)mousePosition - (Vector2)transform.position;
         transform.up = direction;
     }

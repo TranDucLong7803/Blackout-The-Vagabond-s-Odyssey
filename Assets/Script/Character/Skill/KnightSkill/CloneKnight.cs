@@ -44,8 +44,10 @@ public class CloneKnight : MonoBehaviour
     }
     private void Update()
     {
+        if (InputManager.GameplayBlocked) return;
+
         playerWeaponController.RotateWeapon();
-        if (Input.GetMouseButton(0))
+        if (InputManager.Instance.IsAttackHeld)
         {
             playerWeaponController.Attack();
         }

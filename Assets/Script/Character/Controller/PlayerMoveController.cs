@@ -18,18 +18,11 @@ public class PlayerMoveController : MonoBehaviour
 
     public bool MoveControl()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        if (ShopUI.Instance != null)
-        {
-            if (ShopUI.Instance.isOpenShop) return false;
-        }
-        Vector2 moveInput = new Vector2(horizontal, vertical);
-        bool isMoving = moveInput.sqrMagnitude > 0.01f;
-
-        rd.linearVelocity = moveInput.normalized * speed;
-
-        return isMoving;
+        Vector2 moveInput = InputManager.GameplayBlocked
+            ? Vector2.zero
+            : InputManager.Instance.playerInput.Ingame.Move.ReadValue<Vector2>();
+        rd.linearVelocity = Vector2.ClampMagnitude(moveInput, 1f) * speed;
+        return moveInput != Vector2.zero;
     }
 
     public void ApplySpeedBoost(float percentBoost, float duration)

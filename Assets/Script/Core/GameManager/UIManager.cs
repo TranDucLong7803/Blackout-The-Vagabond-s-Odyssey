@@ -1,17 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 public class UIManager : MonoBehaviour
 {
-    public IUIScreen openedScreen;
+    private IUIScreen openedScreen;
+    public IUIScreen OpenedScreen => openedScreen is Object obj && obj == null ? null : openedScreen;
     public UnityEvent<float,float> healthBarEvent;
     public UnityEvent<float,float> shieldBarEvent;
-
-    //private Stack<IUIScreen> uiStack = new(); //stack for closing ui
 
     #region Singleton
     public static UIManager Instance {get; private set;}
@@ -32,24 +29,37 @@ public class UIManager : MonoBehaviour
 
     public void ToggleScreen(IUIScreen screen)
     {
+        if (screen == null || (screen is Object obj && obj == null)) return;
+
+        if (OpenedScreen == screen)
+        {
+            CloseCurrentScreen();
+            return;
+        }
+
+        if (Time.timeScale <= 0f) return;
+
+        CloseCurrentScreen();
+        openedScreen = screen;
+        screen.Open();
+        if (AimPoint.Instance != null) AimPoint.Instance.DisableAim();
+    }
+
+    public void CloseCurrentScreen()
+    {
+        var screen = OpenedScreen;
+        openedScreen = null;
         if (screen == null) return;
 
-        if (openedScreen == screen)
-        {
-            screen.Close();
-            openedScreen = null;
-        }
-        else
-        {
-            if (openedScreen != null) openedScreen.Close();
-            screen.Open();
-            openedScreen = screen;
-        }
+        if (InputManager.Instance != null) InputManager.Instance.SuppressHeldAttack();
+        if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+        screen.Close();
+        if (AimPoint.Instance != null) AimPoint.Instance.EnableAim();
     }
 
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        if (Instance == this) SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDisable()
@@ -59,18 +69,6 @@ public class UIManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        try
-        {
-            if (openedScreen != null)
-            {
-                openedScreen.Close();
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("Error closing screen: " + e.Message);
-        }
-        
-        openedScreen = null;
+        CloseCurrentScreen();
     }
 }

@@ -15,7 +15,7 @@ public class BackgroundPan : MonoBehaviour
 
     void Update()
     {
-        Vector2 mousePos = Input.mousePosition;
+        Vector2 mousePos = InputManager.PointerPosition;
         Vector2 screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
         Vector2 offsetFromCenter = (mousePos - screenCenter) / screenCenter;
 

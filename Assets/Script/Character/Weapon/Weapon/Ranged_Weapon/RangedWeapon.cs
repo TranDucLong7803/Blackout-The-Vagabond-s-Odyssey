@@ -226,7 +226,7 @@ public class RangedWeapon : BaseWeapon, IPick
 
     public override float RotateToMousePos()
     {
-        Vector3 mousePos = Input.mousePosition;
+        Vector3 mousePos = InputManager.PointerPosition;
         mousePos.z = Camera.main.nearClipPlane;
 
         Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);

@@ -1,8 +1,7 @@
-using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CircleCollider2D))]
+[DefaultExecutionOrder(-15)]
 public class Interactor : MonoBehaviour
 {
     [SerializeField] private float range = 1.5f;
@@ -16,20 +15,21 @@ public class Interactor : MonoBehaviour
         trigger.includeLayers = LayerMask.GetMask("Interactable");
     }
 
-    void OnEnable()
+    private void Update()
     {
-        InputManager.Instance.playerInput.Ingame.Interact.performed += Interact;
-        InputManager.Instance.playerInput.Ingame.Interact.Enable();
+        if (currentInteractable != null && InputManager.Instance.TryConsumeInteract())
+            Interact();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        InputManager.Instance.playerInput.Ingame.Interact.performed -= Interact;
-        InputManager.Instance.playerInput.Ingame.Interact.Disable();
+        ClearInteractable();
     }
     
     private void OnTriggerStay2D(Collider2D collision)
     {
+        if (!isActiveAndEnabled) return;
+
         if (collision.TryGetComponent(out Interactable newInteractable))
         {
             if (currentInteractable != newInteractable)
@@ -43,26 +43,22 @@ public class Interactor : MonoBehaviour
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (currentInteractable != null)
-        {
-            currentInteractable.HighLightOff();
-            currentInteractable = null;
-        }
+        if (currentInteractable != null && collision.gameObject == currentInteractable.gameObject)
+            ClearInteractable();
     }
 
-
-    private void Interact(InputAction.CallbackContext context)
+    private void Interact()
     {
-        if (currentInteractable != null)
-        {
-            currentInteractable.Interact(this);
+        var interactable = currentInteractable;
+        if (interactable == null) return;
 
-            currentInteractable.HighLightOff(); //if teleport away from trigger range
-            currentInteractable = null;
-        }
-        else
-        {
-            Debug.Log("No interactable in range");
-        }
+        ClearInteractable();
+        interactable.Interact(this);
+    }
+
+    private void ClearInteractable()
+    {
+        if (currentInteractable != null) currentInteractable.HighLightOff();
+        currentInteractable = null;
     }
 }

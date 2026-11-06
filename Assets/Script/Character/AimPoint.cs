@@ -6,13 +6,17 @@ public class AimPoint : MonoBehaviour
 
     [SerializeField] private Texture2D cursorTexture;
 
-    private Vector2 cursorHotspot;
-
-    // Start is called before the first frame update
-    void Start()
+    private void OnEnable()
     {
-        cursorHotspot = new Vector2(cursorTexture.width / 2, cursorTexture.height / 2);
+        if (cursorTexture == null) return;
+
+        var cursorHotspot = new Vector2(cursorTexture.width / 2, cursorTexture.height / 2);
         Cursor.SetCursor(cursorTexture, cursorHotspot, CursorMode.ForceSoftware);
+    }
+
+    private void OnDisable()
+    {
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
     }
 
     private void Awake()
@@ -23,6 +27,7 @@ public class AimPoint : MonoBehaviour
     public void DisableAim()
     {
         gameObject.SetActive(false);
+        Cursor.visible = true;
     }
 
     public void EnableAim()

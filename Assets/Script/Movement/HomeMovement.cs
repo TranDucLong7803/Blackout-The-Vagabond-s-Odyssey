@@ -16,6 +16,7 @@ public class HomeMovement : MonoBehaviour
 
     public void BindObj(GameObject obj)
     {
+        StopMoving();
         bindedObj = obj;
         rb = bindedObj.GetComponent<Rigidbody2D>();
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
@@ -28,20 +29,30 @@ public class HomeMovement : MonoBehaviour
         if(bindedObj) animator.SetBool(moveAnimation, MoveControl());
     }
 
+    private void OnDisable()
+    {
+        StopMoving();
+    }
+
+    private void StopMoving()
+    {
+        if (rb != null) rb.linearVelocity = Vector2.zero;
+        if (animator != null) animator.SetBool(moveAnimation, false);
+    }
+
     private bool MoveControl()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        Vector2 moveInput = InputManager.GameplayBlocked
+            ? Vector2.zero
+            : InputManager.Instance.playerInput.Ingame.Move.ReadValue<Vector2>();
+        rb.linearVelocity = Vector2.ClampMagnitude(moveInput, 1f) * speed;
 
-        Vector2 moveInput = new Vector2(horizontal, vertical);
-        rb.linearVelocity = moveInput.normalized * speed;
-
-        if (horizontal > 0 && !isFacingRight)
+        if (moveInput.x > 0 && !isFacingRight)
             Flip();
-        else if (horizontal < 0 && isFacingRight)
+        else if (moveInput.x < 0 && isFacingRight)
             Flip();
 
-        return moveInput.sqrMagnitude > 0.01f;
+        return moveInput != Vector2.zero;
     }
 
     private void Flip()

@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class SettingsMenuUI : MonoBehaviour
+public class SettingsMenuUI : MonoBehaviour, IUIScreen
 {
     public static SettingsMenuUI Instance { get; private set; }
 
@@ -11,9 +12,6 @@ public class SettingsMenuUI : MonoBehaviour
     [SerializeField] private Slider sfxSlider;
 
     [SerializeField] private SoundMixerManager soundMixerManager;
-
-    private bool isPaused = false;
-    public bool isOpenSettingMenu = false;
 
     private const string MusicKey = "MusicVolume";
     private const string SFXKey = "SoundFXVolume";
@@ -29,72 +27,62 @@ public class SettingsMenuUI : MonoBehaviour
         }
 
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        if (transform.parent == null) DontDestroyOnLoad(gameObject);
     }
 
     private void Start()
     {
-        settingsPanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
         LoadSavedVolume();
 
-        musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
-        sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            if (InventoryController.Instance.isOpenInventory)
-            {
-                InventoryController.Instance.Close();
-                Show();
-                return;
-            }
-            
-        }
+        if (musicSlider != null) musicSlider.onValueChanged.AddListener(OnMusicSliderChanged);
+        if (sfxSlider != null) sfxSlider.onValueChanged.AddListener(OnSFXSliderChanged);
     }
 
     public void Show()
     {
-        isOpenSettingMenu = !isOpenSettingMenu;
-        isPaused = !isPaused;
-        settingsPanel?.SetActive(isPaused);
-        Time.timeScale = isPaused ? 0f : 1f;
+        if (settingsPanel != null && UIManager.Instance != null) UIManager.Instance.ToggleScreen(this);
+    }
+
+    public void Open()
+    {
+        settingsPanel.SetActive(true);
+        Time.timeScale = 0f;
+
+        var resumeButton = settingsPanel.GetComponentInChildren<Button>();
+        if (resumeButton != null && EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(resumeButton.gameObject);
+    }
+
+    public void Close()
+    {
+        settingsPanel.SetActive(false);
+        Time.timeScale = 1f;
     }
 
     public void ResumeGame()
     {
-        isPaused = false;
-        isOpenSettingMenu = false;
-        if (settingsPanel != null)
-        {
-            settingsPanel.SetActive(false);
-        }
-
-        Time.timeScale = 1f;
+        if (UIManager.Instance != null && UIManager.Instance.OpenedScreen == this)
+            UIManager.Instance.CloseCurrentScreen();
     }
-
-    
 
     public void QuitGame()
     {
-        isOpenSettingMenu = false;
-        Time.timeScale = 1f;
+        ResumeGame();
         DontDestroyCleaner.ClearDDOL();
         SceneManager.LoadScene("Main Menu");
     }
 
     private void OnMusicSliderChanged(float value)
     {
-        soundMixerManager.setMusicVolume(value);
+        if (soundMixerManager != null) soundMixerManager.setMusicVolume(value);
         PlayerPrefs.SetFloat(MusicKey, value);
         //PlayerPrefs.Save();
     }
 
     private void OnSFXSliderChanged(float value)
     {
-        soundMixerManager.setSoundFXVolume(value);
+        if (soundMixerManager != null) soundMixerManager.setSoundFXVolume(value);
         PlayerPrefs.SetFloat(SFXKey, value);
         //PlayerPrefs.Save();
     }
@@ -104,11 +92,14 @@ public class SettingsMenuUI : MonoBehaviour
         float musicVolume = PlayerPrefs.GetFloat(MusicKey, 0.75f);  // default: 75%
         float sfxVolume = PlayerPrefs.GetFloat(SFXKey, 0.75f);
 
-        musicSlider.value = musicVolume;
-        sfxSlider.value = sfxVolume;
+        if (musicSlider != null) musicSlider.value = musicVolume;
+        if (sfxSlider != null) sfxSlider.value = sfxVolume;
 
-        soundMixerManager.setMusicVolume(musicVolume);
-        soundMixerManager.setSoundFXVolume(sfxVolume);
+        if (soundMixerManager != null)
+        {
+            soundMixerManager.setMusicVolume(musicVolume);
+            soundMixerManager.setSoundFXVolume(sfxVolume);
+        }
     }
 
 }

@@ -39,7 +39,7 @@ public class AssassinSkill : BaseSkill
     public override void NormalSkill()
     {
 
-        Vector3 mouseScreenPos = Input.mousePosition;
+        Vector3 mouseScreenPos = InputManager.PointerPosition;
         mouseScreenPos.z = Camera.main.WorldToScreenPoint(transform.position).z;
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(mouseScreenPos);
 

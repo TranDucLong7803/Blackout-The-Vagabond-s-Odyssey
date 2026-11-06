@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using Assets.Script;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -82,52 +76,40 @@ public class Player : MonoBehaviour
             else
                 anim.SetBool("isHurt", false);
 
+            if (InputManager.GameplayBlocked) return;
+
+            var inputManager = InputManager.Instance;
+            var input = inputManager.playerInput.Ingame;
             if (!skillController.IsUsingSkill())
             {
-                if (Input.GetButtonDown("weapon1"))
+                if (input.Previous.WasPressedThisFrame())
                 {
                     weaponController.ChangeWeapon(1);
                 }
 
-                if (Input.GetButtonDown("weapon2") && !weaponController.haveOneWepon)
+                if (input.Next.WasPressedThisFrame() && !weaponController.haveOneWepon)
                 {
                     weaponController.ChangeWeapon(2);
                 }
 
-                if (Input.GetButtonDown("Interact") && pickController.isTouchItem)
+                if (pickController.isTouchItem && pickController.Item != null && inputManager.TryConsumeInteract())
                 {
                     pickController.PickItemWeapon();
                 }
 
                 weaponController.RotateWeapon();
-                if (Input.GetButton("Fire"))
+                if (inputManager.IsAttackHeld)
                 {
                     weaponController.Attack();
                 }
             }
 
-            if (Input.GetButtonDown("bag") && !SettingsMenuUI.Instance.isOpenSettingMenu && !ShopUI.Instance.isOpenShop)
-            {
-                if (!inventoryController.isOpenInventory)
-                {
-                    UIManager.Instance.ToggleScreen(inventoryController);
-                    AimPoint.Instance.DisableAim();
-                    Cursor.visible = true;
-                }
-                else
-                {
-
-                    UIManager.Instance.ToggleScreen(inventoryController);
-                    AimPoint.Instance.EnableAim();
-                }
-            }
-
-            if (Input.GetButtonDown("Skill1") && skillController.CanUseSkill1())
+            if (input.Skill1.WasPressedThisFrame() && skillController.CanUseSkill1())
             {
                 anim.SetBool("isSkill1", true);
 
             }
-            if (Input.GetButtonDown("Skill2") && skillController.CanUseSkill2())
+            if (input.Skill2.WasPressedThisFrame() && skillController.CanUseSkill2())
             {
                 anim.SetBool("isSkill2", true);
             }

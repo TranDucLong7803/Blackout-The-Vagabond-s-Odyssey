@@ -188,7 +188,7 @@ public class ThrowableWeaponCurve : BaseWeapon, IPick
             ThrowableWeaponCurveProjectile projectile = bullet.GetComponent<ThrowableWeaponCurveProjectile>();
 
 
-            Vector3 mousePos = Input.mousePosition;
+            Vector3 mousePos = InputManager.PointerPosition;
             mousePos.z = Mathf.Abs(Camera.main.transform.position.z);
             Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);
 
@@ -232,7 +232,7 @@ public class ThrowableWeaponCurve : BaseWeapon, IPick
 
     public override float RotateToMousePos()
     {
-        Vector3 mousePos = Input.mousePosition;
+        Vector3 mousePos = InputManager.PointerPosition;
         mousePos.z = Camera.main.nearClipPlane;
 
         Vector3 worldMousePos = Camera.main.ScreenToWorldPoint(mousePos);

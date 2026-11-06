@@ -84,7 +84,7 @@ public class WizardSkill : BaseSkill
 
     public void ShootFireBall()
     {
-        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(InputManager.PointerPosition);
         mouseWorldPos.z = 0f;
 
         Vector3 direction = (mouseWorldPos - firePos.position).normalized;

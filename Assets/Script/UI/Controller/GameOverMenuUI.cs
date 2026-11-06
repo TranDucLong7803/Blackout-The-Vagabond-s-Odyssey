@@ -26,6 +26,8 @@ public class GameOverMenuUI : MonoBehaviour
 
     public void Show()
     {
+        if (UIManager.Instance != null) UIManager.Instance.CloseCurrentScreen();
+        if (AimPoint.Instance != null) AimPoint.Instance.DisableAim();
         stageLevelText.text = $"You made it to Stage: {GameManager.Instance.currentStage}, Level: {GameManager.Instance.currentLevel}";
         gameoverMenu.SetActive(true);
         Time.timeScale = 0f;

@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,66 +9,56 @@ public class MapUI : MonoBehaviour, IUIScreen
     [SerializeField] private float maxZoom = 100f;
     [SerializeField] private Camera mapCamera;
     [SerializeField] private GameObject minimap, map;
+    private bool isOpen;
 
     private void Awake()
     {
-        Close(); //big map closed by default
+        SetMapVisible(false);
     }
 
     public void Open()
     {
-        map.SetActive(true);
-        minimap.SetActive(false);
+        SetMapVisible(true);
         InputManager.Instance.playerInput.MapUI.Enable();
     }
 
     public void Close()
     {
-        map.SetActive(false);
-        minimap.SetActive(true);
-        InputManager.Instance.playerInput.MapUI.Disable();
+        SetMapVisible(false);
+        if (InputManager.Instance != null) InputManager.Instance.playerInput.MapUI.Disable();
     }
 
-    private void OnEnable()
+    private void SetMapVisible(bool visible)
     {
-        InputManager.Instance.playerInput.Ingame.Togglemap.performed += Toggle;
-        InputManager.Instance.playerInput.Ingame.Togglemap.Enable();
-        InputManager.Instance.playerInput.MapUI.Zoommap.performed += Zoom;
-        InputManager.Instance.playerInput.MapUI.Zoommap.Enable();
-        InputManager.Instance.playerInput.MapUI.Panmap.performed += Pan;
-        InputManager.Instance.playerInput.MapUI.Panmap.Enable();
+        isOpen = visible;
+        if (map != null) map.SetActive(visible);
+        if (minimap != null) minimap.SetActive(!visible);
     }
 
     private void OnDisable()
     {
-        InputManager.Instance.playerInput.Ingame.Togglemap.performed -= Toggle;
-        InputManager.Instance.playerInput.Ingame.Togglemap.Disable();
-        InputManager.Instance.playerInput.MapUI.Zoommap.performed -= Zoom;
-        InputManager.Instance.playerInput.MapUI.Zoommap.Disable();
-        InputManager.Instance.playerInput.MapUI.Panmap.performed -= Pan;
-        InputManager.Instance.playerInput.MapUI.Panmap.Disable();
+        if (!isOpen) return;
+
+        var ui = UIManager.Instance;
+        if (ui != null && ui.OpenedScreen == this)
+            ui.CloseCurrentScreen();
+        else
+            Close();
     }
 
-    private void Toggle(InputAction.CallbackContext context)
+    private void LateUpdate()
     {
-        UIManager.Instance.ToggleScreen(this);
-    }
+        if (!isOpen || mapCamera == null) return;
 
-    private void Zoom(InputAction.CallbackContext context)
-    {
-        float zoom = mapCamera.orthographicSize;
-        zoom -= context.ReadValue<float>() * zoomSpeed;
-        zoom = Mathf.Clamp(zoom, minZoom, maxZoom);
-        mapCamera.orthographicSize = zoom;
-    }
+        var input = InputManager.Instance.playerInput.MapUI;
+        float scroll = input.Zoommap.ReadValue<float>();
+        if (scroll != 0f)
+            mapCamera.orthographicSize = Mathf.Clamp(mapCamera.orthographicSize - scroll * zoomSpeed, minZoom, maxZoom);
 
-    private void Pan(InputAction.CallbackContext context)
-    {
-        if (Mouse.current.leftButton.isPressed) // fixed left click hold to pan
+        if (Mouse.current != null && Mouse.current.leftButton.isPressed)
         {
-            Vector2 mouseDelta = context.ReadValue<Vector2>(); // mouse pos change each frame
-            Vector3 move = new Vector3(-mouseDelta.x, -mouseDelta.y, 0) * panSpeed; 
-            mapCamera.transform.position += move;
+            Vector2 delta = input.Panmap.ReadValue<Vector2>();
+            mapCamera.transform.position -= (Vector3)delta * panSpeed;
         }
     }
 }
