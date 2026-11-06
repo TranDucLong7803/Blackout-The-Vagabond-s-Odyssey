@@ -30,8 +30,7 @@ public class Enemy_Movement_AI : MonoBehaviour
     void Start()
     {
         enemy = GetComponent<Enemy>();
-        Transform playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
-        target = playerTransform;
+        target = GameObject.FindGameObjectWithTag("Player")?.transform;
         moveSpeed = movementDetails.GetMoveSpeed();
 
         seeker = GetComponent<Seeker>();
@@ -41,7 +40,7 @@ public class Enemy_Movement_AI : MonoBehaviour
     }
     void UpdatePath()
     {
-        if (chasePlayer && seeker.IsDone())
+        if (enemy.CanAct && chasePlayer && target != null && seeker.IsDone())
         {
             Vector3 adjustedTargetPosition = new Vector3(target.position.x, target.position.y + 0.5f, target.position.z);
             seeker.StartPath(rb.position, adjustedTargetPosition, OnPathComplete);
@@ -59,7 +58,7 @@ public class Enemy_Movement_AI : MonoBehaviour
 
     void Update()
     {
-        if (enemy.health > 0)
+        if (enemy.CanAct && target != null)
         {
             CheckChaseCondition();
             
@@ -73,13 +72,13 @@ public class Enemy_Movement_AI : MonoBehaviour
         }
     }
 
-    public void CheckChaseCondition()
+    private void CheckChaseCondition()
     {
 
         float distanceToPlayer = Vector3.Distance(transform.position, target.position);
 
        
-        if (!chasePlayer && distanceToPlayer < enemy.enemyDetails.chaseDistance
+        if (!chasePlayer && (enemy.roomBelong != null || distanceToPlayer < enemy.enemyDetails.chaseDistance)
             && !isWaitingToResumeChase )
         {
             chasePlayer = true;
@@ -104,7 +103,7 @@ public class Enemy_Movement_AI : MonoBehaviour
     {
         isWaitingToResumeChase = true;
         yield return new WaitForSeconds(resumeChaseDelay);
-        if (Vector3.Distance(transform.position, target.position) > resumeChaseDistance)
+        if (enemy.CanAct && target != null && Vector3.Distance(transform.position, target.position) > resumeChaseDistance)
         {
             chasePlayer = true;
         }
@@ -160,7 +159,7 @@ public class Enemy_Movement_AI : MonoBehaviour
     }
     public void StartChase()
     {
-        chasePlayer = true;
+        if (enemy.CanAct) chasePlayer = true;
     }
     void OnDisable()
     {

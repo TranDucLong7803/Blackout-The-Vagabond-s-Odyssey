@@ -41,8 +41,7 @@ public class RedZoneHitBox : MonoBehaviour
     {
         while (true)
         {
-            AttackContext.CurrentAttackType = AttackType.Weapon;
-            enemy.takeDame(damage);
+            AttackContext.DealPlayerDamage(enemy, damage, AttackType.Weapon);
             yield return new WaitForSeconds(damageInterval);
         }
     }

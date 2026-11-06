@@ -9,7 +9,7 @@ public class EliteRoomSetup : MonoBehaviour
     public Transform objectParent;
     private BoxRoom eliteRoom;
     
-    public void SetupEliteRoom(BoxRoom room)
+    public void SetupEliteRoom(BoxRoom room, PlayerSpawner playerSpawner)
     {
         eliteRoom = room;
         var barrierParent = new GameObject("Barrier").transform; //contains this room barriers
@@ -17,7 +17,7 @@ public class EliteRoomSetup : MonoBehaviour
         eliteRoom.barrierReference = barrierParent.gameObject; //reference to room
         var barrierList = PlaceBarriers(barrierParent); //barriers reference for trigger
 
-        PlaceTrigger(barrierList);
+        PlaceTrigger(barrierList, playerSpawner);
 
         if(room.eliteReference != null) //wait spawn animation
         {
@@ -25,15 +25,14 @@ public class EliteRoomSetup : MonoBehaviour
         }
     }
 
-    private void PlaceTrigger(List<GameObject> barrierList)
+    private void PlaceTrigger(List<GameObject> barrierList, PlayerSpawner playerSpawner)
     {
         var trigger = PlaceCenterCell(triggerPrefab, eliteRoom.center, objectParent);
         var scale = new Vector3(eliteRoom.size.x*2-1, eliteRoom.size.y*2-1, 1);
         trigger.transform.localScale = scale;
 
         var triggerScript = trigger.GetComponent<EliteTrigger>();
-        triggerScript.eliteRoom = eliteRoom;
-        triggerScript.barriers = barrierList;
+        triggerScript.Initialize(eliteRoom, barrierList, playerSpawner);
     }
 
     private List<GameObject> PlaceBarriers(Transform barrierParent)

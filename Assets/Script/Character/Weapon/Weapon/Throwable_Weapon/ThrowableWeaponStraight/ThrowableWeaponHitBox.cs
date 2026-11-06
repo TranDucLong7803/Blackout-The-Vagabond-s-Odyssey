@@ -18,8 +18,7 @@ public class ThrowableWeaponHitBox : MonoBehaviour
         // if (enemy != null)
         if (collision.gameObject.TryGetComponent<IDamageable>(out var enemy))
         {
-            AttackContext.CurrentAttackType = AttackType.Weapon;
-            enemy.takeDame(weapon.dame);
+            AttackContext.DealPlayerDamage(enemy, weapon.dame, AttackType.Weapon);
 
             PoolManagement.Instance.ReturnBullet(gameObject, weapon.throwablePrefab);
         }

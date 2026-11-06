@@ -15,6 +15,7 @@ public class Enemy : MonoBehaviour
 
     public int damage;
     public int health;
+    public bool CanAct => health > 0 && (roomBelong == null || roomBelong.IsCombatActive);
 
     public bool isHurt;
     public bool has3Attack;
@@ -34,7 +35,6 @@ public class Enemy : MonoBehaviour
         // isAttack1 = false;
         animator = GetComponent<Animator>();
         isHurt = false;
-        ai.CheckChaseCondition();
         if (GameManager.Instance != null)
         {
             switch (GameManager.Instance.currentStage)
@@ -57,6 +57,8 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
+        if (!CanAct) return;
+
         //animator.SetBool("isAttack1", checkAttack());
         if (!isAttacking && checkAttack() && !isArcher)
         {

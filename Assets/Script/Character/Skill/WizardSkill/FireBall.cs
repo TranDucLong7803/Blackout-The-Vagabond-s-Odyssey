@@ -14,8 +14,7 @@ public class FireBall : MonoBehaviour
     {
         if (collision.gameObject.TryGetComponent<IDamageable>(out var enemy))
         {
-            AttackContext.CurrentAttackType = AttackType.NormalSkill;
-            enemy.takeDame(wizardSkill.normalSkillDame);
+            AttackContext.DealPlayerDamage(enemy, wizardSkill.normalSkillDame, AttackType.NormalSkill);
            
         }
         else PoolManagement.Instance.ReturnBullet(gameObject, wizardSkill.normalBulletPrefab);

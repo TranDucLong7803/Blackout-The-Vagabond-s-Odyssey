@@ -36,8 +36,7 @@ public class Bullet : MonoBehaviour
 
         if (damageable)
         {
-            AttackContext.CurrentAttackType = AttackType.Weapon;
-            target.takeDame(weapon.dam);
+            AttackContext.DealPlayerDamage(target, weapon.dam, AttackType.Weapon);
         }
 
         pool.ReturnBullet(gameObject, bulletPrefab);

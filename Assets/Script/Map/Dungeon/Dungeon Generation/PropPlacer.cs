@@ -599,7 +599,7 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance+Vector2Int.right);
                         if(Random.value <= doorChance)
                         {
-                            PlaceDoor(room.topEntrance, 2);
+                            PlaceDoor(room, room.topEntrance, 2);
                         }
                         break;
                     case 0-1:
@@ -611,7 +611,7 @@ public class PropPlacer : MonoBehaviour
 
                         if (Random.value <= doorChance)
                         {
-                            PlaceDoor(room.bottomEntrance, 0);
+                            PlaceDoor(room, room.bottomEntrance, 0);
                         }
                         break;
                     case -10:
@@ -622,7 +622,7 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance+Vector2Int.down);
                         if (Random.value <= doorChance)
                         {
-                            PlaceDoor(room.leftEntrance, 1);
+                            PlaceDoor(room, room.leftEntrance, 1);
                         }
                         break;
                     case 10:
@@ -633,7 +633,7 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance+Vector2Int.down);
                         if (Random.value <= doorChance)
                         {
-                            PlaceDoor(room.rightEntrance, 1);
+                            PlaceDoor(room, room.rightEntrance, 1);
                         }
                         break;
                 }
@@ -642,9 +642,11 @@ public class PropPlacer : MonoBehaviour
         
     }
 
-    private void PlaceDoor(Vector2Int pos, int index)
+    private void PlaceDoor(BoxRoom room, Vector2Int pos, int index)
     {
         var doorPos = new Vector3(pos.x + 0.5f, pos.y +0.5f, 0);
         var door = Instantiate(doors[index], doorPos, Quaternion.identity, propParent);
+        if (door.TryGetComponent<Damageable>(out var damageable))
+            damageable.BrokenByPlayer += room.ActivateCombat;
     }
 }

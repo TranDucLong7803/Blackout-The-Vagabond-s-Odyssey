@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,8 +25,17 @@ public class Room
     public HashSet<Vector2Int> nearRightWall = new();
     public HashSet<Vector2Int> inners = new();
 
+    public bool IsCombatActive { get; private set; }
+    public event Action CombatActivated;
 
-    //public NotificationController roomNotification;
+    public void ActivateCombat()
+    {
+        if (IsCombatActive) return;
+
+        IsCombatActive = true;
+        CombatActivated?.Invoke();
+    }
+
     public void OnEnemyDeath()
     {
         enemyCount--;

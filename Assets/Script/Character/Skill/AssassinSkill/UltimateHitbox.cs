@@ -6,8 +6,7 @@ public class UltimateHitbox : MonoBehaviour
     {
         if (collision.gameObject.TryGetComponent<IDamageable>(out var enemy))
         {
-            AttackContext.CurrentAttackType = AttackType.UltimateSkill;
-            enemy.takeDame(GetComponentInParent<AssassinSkill>().DameUltimateSkill);
+            AttackContext.DealPlayerDamage(enemy, GetComponentInParent<AssassinSkill>().DameUltimateSkill, AttackType.UltimateSkill);
         }
     }
 }

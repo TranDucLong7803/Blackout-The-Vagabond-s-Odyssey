@@ -6,8 +6,7 @@ public class DashHitBox : MonoBehaviour
     {
         if (collision.gameObject.TryGetComponent<IDamageable>(out var enemy))
         {
-            AttackContext.CurrentAttackType = AttackType.NormalSkill;
-            enemy.takeDame(GetComponentInParent<AssassinSkill>().DameNormalSkill);
+            AttackContext.DealPlayerDamage(enemy, GetComponentInParent<AssassinSkill>().DameNormalSkill, AttackType.NormalSkill);
         }
     }
 }

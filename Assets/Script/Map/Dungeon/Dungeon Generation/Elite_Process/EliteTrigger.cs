@@ -6,38 +6,54 @@ public class EliteTrigger : MonoBehaviour
 {
     public GameObject spawnAnimation;
     [SerializeField] private float delaySpawn = 0.5f;
-    [HideInInspector] public BoxRoom eliteRoom;
-    [HideInInspector] public List<GameObject> barriers;
-    private bool isTriggered = false;
+    private BoxRoom eliteRoom;
+    private List<GameObject> barriers;
+    private PlayerSpawner playerSpawner;
+    private bool playerEntered;
+
+    public void Initialize(BoxRoom room, List<GameObject> roomBarriers, PlayerSpawner spawner)
+    {
+        eliteRoom = room;
+        barriers = roomBarriers;
+        playerSpawner = spawner;
+        eliteRoom.CombatActivated += SpawnElite;
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if(!isTriggered)
+        if (playerEntered || eliteRoom == null || !other.CompareTag("Player")
+            || (playerSpawner != null && !playerSpawner.HasSpawned)) return;
+
+        playerEntered = true;
+        eliteRoom.ActivateCombat();
+        if (eliteRoom.enemyCount > 0)
         {
-            isTriggered = true;
-            foreach(var barrier in barriers) //block entrances
-            {
-                //animation 
+            foreach (var barrier in barriers)
                 barrier.SetActive(true);
-            }
 
-            GameManager.Instance.PlayCurrentStageEliteMusic();
-
-            EnableElite(); //appear animation then re enable elite
+            if (GameManager.Instance != null) GameManager.Instance.PlayCurrentStageEliteMusic();
         }
+        Destroy(gameObject, delaySpawn + 1f);
     }
 
-    private void EnableElite()
+    private void SpawnElite()
     {
-        var anim = Instantiate(spawnAnimation, eliteRoom.eliteReference.transform.position, Quaternion.identity);
-        StartCoroutine(WaitSpawnAnimation(delaySpawn));
-        Destroy(anim, delaySpawn+0.5f);
-        Destroy(gameObject, delaySpawn+1); //destroy trigger after all
+        var elite = eliteRoom.eliteReference;
+        if (elite == null) return;
+
+        var animation = Instantiate(spawnAnimation, elite.transform.position, Quaternion.identity);
+        StartCoroutine(ShowEliteAfterDelay(elite));
+        Destroy(animation, delaySpawn + 0.5f);
     }
 
-    private IEnumerator WaitSpawnAnimation(float delay)
+    private IEnumerator ShowEliteAfterDelay(GameObject elite)
     {
-        yield return new WaitForSeconds(delay);
-        eliteRoom.eliteReference.SetActive(true);
+        yield return new WaitForSeconds(delaySpawn);
+        if (elite != null) elite.SetActive(true);
+    }
+
+    private void OnDestroy()
+    {
+        if (eliteRoom != null) eliteRoom.CombatActivated -= SpawnElite;
     }
 }

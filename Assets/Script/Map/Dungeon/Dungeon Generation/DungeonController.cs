@@ -10,9 +10,28 @@ public class DungeonController : AbstractDungeonGenerator
     public PropPlacer propPlacer;
     public AgentPlacer agentPlacer;
     public EliteRoomSetup eliteRoomSetup;
+    private Transform player;
+    private PlayerSpawner playerSpawner;
  
+    private void Update()
+    {
+        if (playerSpawner != null && !playerSpawner.HasSpawned) return;
+
+        if (player == null)
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        if (player == null) return;
+
+        var playerTile = Vector2Int.FloorToInt(player.position);
+        foreach (var room in DungeonData.rooms)
+        {
+            if (room.enemyCount > 0 && !room.IsCombatActive && room.roomTiles.Contains(playerTile))
+                room.ActivateCombat();
+        }
+    }
+
     protected override void RunProceduralGeneration()
     {
+        playerSpawner = FindFirstObjectByType<PlayerSpawner>();
         PopulateRooms();
     }
 
@@ -42,7 +61,7 @@ public class DungeonController : AbstractDungeonGenerator
                     propPlacer.PlaceTraps(room);
                     agentPlacer.PlaceAgents(room);
 
-                    eliteRoomSetup.SetupEliteRoom(room); //elite room setup
+                    eliteRoomSetup.SetupEliteRoom(room, playerSpawner);
                     break;
 
                 case RoomType.Treasure:

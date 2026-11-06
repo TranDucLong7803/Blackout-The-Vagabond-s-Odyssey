@@ -8,6 +8,7 @@ public class PlayerSpawner : MonoBehaviour
     [SerializeField] private float delaySpawn = 1f;
     [SerializeField] private float delayPlayer = 0.2f;
     private GameObject[] players;
+    public bool HasSpawned { get; private set; }
 
     void Awake()
     {
@@ -39,6 +40,7 @@ public class PlayerSpawner : MonoBehaviour
             foreach(var s in ps) s.enabled = true;
             p.transform.position = this.transform.position;
         }
+        HasSpawned = true;
     }
 
 }

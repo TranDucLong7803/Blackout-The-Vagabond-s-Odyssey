@@ -1,5 +1,6 @@
-﻿using Pathfinding;
+﻿using System;
 using System.Collections;
+using Pathfinding;
 using UnityEngine;
 
 [RequireComponent(typeof(Collider2D))]
@@ -7,6 +8,9 @@ public class Damageable : MonoBehaviour, IDamageable
 {
     public int health = 3;
     private Lootable lootable;
+    private bool isBreaking;
+
+    public event Action BrokenByPlayer;
 
     private void Awake()
     {
@@ -15,44 +19,34 @@ public class Damageable : MonoBehaviour, IDamageable
 
     public virtual void takeDame(int damage)
     {
-        health -= damage;
-        if (health <= 0)
-        {
-            Break();
-            
-        }
-    }
+        if (isBreaking) return;
 
-    private void Break()
-    {
-        //AstarPath.active.Scan();
-        if (lootable != null)
-        {
-            lootable.DropLoot();
-        }
-        //Destroy(gameObject);
+        health -= damage;
+        if (health > 0) return;
+
+        isBreaking = true;
+        if (lootable != null) lootable.DropLoot();
         StartCoroutine(UpdateGraphAndDestroy());
     }
-    
+
+    public void TakePlayerDamage(int damage)
+    {
+        bool wasBreaking = isBreaking;
+        takeDame(damage);
+        if (!wasBreaking && isBreaking)
+            BrokenByPlayer?.Invoke();
+    }
+
     private IEnumerator UpdateGraphAndDestroy()
     {
-        // Đợi 1 frame để đảm bảo collider đã bị vô hiệu hóa/hủy bỏ
         yield return null;
 
-       
-        Collider2D col = GetComponent<Collider2D>();
-        if (col != null)
+        if (TryGetComponent<Collider2D>(out var collider))
         {
-            col.enabled = false;
-
-            Bounds updateBounds = col.bounds;
-
-            GraphUpdateObject guo = new GraphUpdateObject(updateBounds);
-           
-            // guo.modifyWalkability = true;
-            // guo.setWalkability = true;
-
-            AstarPath.active.UpdateGraphs(guo);
+            Bounds updateBounds = collider.bounds;
+            collider.enabled = false;
+            if (AstarPath.active != null)
+                AstarPath.active.UpdateGraphs(new GraphUpdateObject(updateBounds));
         }
         Destroy(gameObject);
     }
