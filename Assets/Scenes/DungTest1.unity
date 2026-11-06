@@ -39040,12 +39040,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 22672a4f95228514b982aef29c3c2471, type: 2}
   trapProps:
   - {fileID: 11400000, guid: 086c7c35b0916d249a9ac4a619804994, type: 2}
-  doors:
-  - {fileID: 5840927637952434948, guid: 5718b443373808c48a4c1db4588db8d7, type: 3}
-  - {fileID: 5840927637952434948, guid: 2ebec1a5b8d2e9e49b8de471aed05b14, type: 3}
-  - {fileID: 7500320502839895836, guid: 3a77656c7ec9f5c44a9f9209009c20e3, type: 3}
   cornerPropChance: 0.6
-  doorChance: 0.6
   propParent: {fileID: 1408683620}
   groundPortal: {fileID: 11400000, guid: c94eda89ceef48d409ecd5678bb2a93a, type: 2}
   shop: {fileID: 11400000, guid: cdd4fb9a984dc6c4db3091381f12c0fd, type: 2}

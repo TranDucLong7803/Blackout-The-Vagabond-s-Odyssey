@@ -11,8 +11,7 @@ public class PropPlacer : MonoBehaviour
     [SerializeField] private List<Prop> props;
     [SerializeField] private List<Prop> lightProps;
     [SerializeField] private List<Prop> trapProps;
-    [SerializeField] private GameObject[] doors; // 0:bottom. 1:side. 2:top
-    [SerializeField, Range(0,1)] private float cornerPropChance = 0.6f, doorChance = 0.6f;
+    [SerializeField, Range(0,1)] private float cornerPropChance = 0.6f;
     [SerializeField] private Transform propParent;
     [SerializeField] private Prop groundPortal;
     [SerializeField] private Prop shop;
@@ -597,10 +596,6 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance);
                         path.Add(beforeEntrance+Vector2Int.left);
                         path.Add(beforeEntrance+Vector2Int.right);
-                        if(Random.value <= doorChance)
-                        {
-                            PlaceDoor(room, room.topEntrance, 2);
-                        }
                         break;
                     case 0-1:
                         room.bottomEntrance = entrance.Value;
@@ -608,11 +603,6 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance);
                         path.Add(beforeEntrance+Vector2Int.left);
                         path.Add(beforeEntrance+Vector2Int.right);
-
-                        if (Random.value <= doorChance)
-                        {
-                            PlaceDoor(room, room.bottomEntrance, 0);
-                        }
                         break;
                     case -10:
                         room.leftEntrance = entrance.Value;
@@ -620,10 +610,6 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance);
                         path.Add(beforeEntrance+Vector2Int.up);
                         path.Add(beforeEntrance+Vector2Int.down);
-                        if (Random.value <= doorChance)
-                        {
-                            PlaceDoor(room, room.leftEntrance, 1);
-                        }
                         break;
                     case 10:
                         room.rightEntrance = entrance.Value;
@@ -631,10 +617,6 @@ public class PropPlacer : MonoBehaviour
                         path.Add(beforeEntrance);
                         path.Add(beforeEntrance+Vector2Int.up);
                         path.Add(beforeEntrance+Vector2Int.down);
-                        if (Random.value <= doorChance)
-                        {
-                            PlaceDoor(room, room.rightEntrance, 1);
-                        }
                         break;
                 }
             }
@@ -642,11 +624,4 @@ public class PropPlacer : MonoBehaviour
         
     }
 
-    private void PlaceDoor(BoxRoom room, Vector2Int pos, int index)
-    {
-        var doorPos = new Vector3(pos.x + 0.5f, pos.y +0.5f, 0);
-        var door = Instantiate(doors[index], doorPos, Quaternion.identity, propParent);
-        if (door.TryGetComponent<Damageable>(out var damageable))
-            damageable.BrokenByPlayer += room.ActivateCombat;
-    }
 }

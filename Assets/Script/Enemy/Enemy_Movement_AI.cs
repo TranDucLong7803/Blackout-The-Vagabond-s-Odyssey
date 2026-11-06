@@ -42,7 +42,7 @@ public class Enemy_Movement_AI : MonoBehaviour
     {
         if (enemy.CanAct && chasePlayer && target != null && seeker.IsDone())
         {
-            Vector3 adjustedTargetPosition = new Vector3(target.position.x, target.position.y + 0.5f, target.position.z);
+            Vector3 adjustedTargetPosition = GetChasePosition(target.position + Vector3.up * 0.5f);
             seeker.StartPath(rb.position, adjustedTargetPosition, OnPathComplete);
         }
     }
@@ -82,11 +82,12 @@ public class Enemy_Movement_AI : MonoBehaviour
             && !isWaitingToResumeChase )
         {
             chasePlayer = true;
+            var chasePosition = GetChasePosition(target.position);
             enemy.movementToPositionEvent.CallMovementToPositionEvent(
-                target.position,
+                chasePosition,
                 transform.position,
                 moveSpeed,
-                (target.position - transform.position).normalized
+                (chasePosition - transform.position).normalized
             );
         }
 
@@ -146,6 +147,11 @@ public class Enemy_Movement_AI : MonoBehaviour
         }
 
         Vector2 targetPosition = (Vector2)path.vectorPath[currentWaypointIndex];
+        if (enemy.roomBelong is BoxRoom room && !room.roomTiles.Contains(Vector2Int.FloorToInt(targetPosition)))
+        {
+            enemy.idleEvent.CallIdleEvent();
+            return;
+        }
         Vector2 direction = (targetPosition - rb.position).normalized;
 
         
@@ -157,6 +163,18 @@ public class Enemy_Movement_AI : MonoBehaviour
         );
         UpdateEnemyFacingDirection();
     }
+
+    private Vector3 GetChasePosition(Vector3 position)
+    {
+        if (enemy.roomBelong is BoxRoom room)
+        {
+            Rect interior = room.Interior;
+            position.x = Mathf.Clamp(position.x, interior.xMin, interior.xMax);
+            position.y = Mathf.Clamp(position.y, interior.yMin, interior.yMax);
+        }
+        return position;
+    }
+
     public void StartChase()
     {
         if (enemy.CanAct) chasePlayer = true;

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class EliteRoomSetup : MonoBehaviour
@@ -7,43 +5,30 @@ public class EliteRoomSetup : MonoBehaviour
     public GameObject[] barriers; //0:front 1:side
     public GameObject triggerPrefab;
     public Transform objectParent;
-    private BoxRoom eliteRoom;
-    
-    public void SetupEliteRoom(BoxRoom room, PlayerSpawner playerSpawner)
+    public void SetupCombatRoom(BoxRoom room)
     {
-        eliteRoom = room;
-        var barrierParent = new GameObject("Barrier").transform; //contains this room barriers
-        barrierParent.SetParent(objectParent);
-        eliteRoom.barrierReference = barrierParent.gameObject; //reference to room
-        var barrierList = PlaceBarriers(barrierParent); //barriers reference for trigger
+        var barrierParent = new GameObject("Barrier").transform;
+        barrierParent.SetParent(objectParent, false);
+        barrierParent.gameObject.SetActive(false);
+        PlaceBarriers(room, barrierParent);
+        barrierParent.gameObject.SetActive(true);
 
-        PlaceTrigger(barrierList, playerSpawner);
-
-        if(room.eliteReference != null) //wait spawn animation
+        if (room.eliteReference != null)
         {
             room.eliteReference.SetActive(false);
+            var trigger = PlaceCenterCell(triggerPrefab, room.center, objectParent);
+            trigger.GetComponent<EliteTrigger>().Initialize(room);
         }
     }
 
-    private void PlaceTrigger(List<GameObject> barrierList, PlayerSpawner playerSpawner)
+    private void PlaceBarriers(BoxRoom room, Transform barrierParent)
     {
-        var trigger = PlaceCenterCell(triggerPrefab, eliteRoom.center, objectParent);
-        var scale = new Vector3(eliteRoom.size.x*2-1, eliteRoom.size.y*2-1, 1);
-        trigger.transform.localScale = scale;
-
-        var triggerScript = trigger.GetComponent<EliteTrigger>();
-        triggerScript.Initialize(eliteRoom, barrierList, playerSpawner);
-    }
-
-    private List<GameObject> PlaceBarriers(Transform barrierParent)
-    {
-        var barrierList = new List<GameObject>();
         var barrierPlace = new[]
         {
-            (eliteRoom.topEntrance, barriers[0]),
-            (eliteRoom.bottomEntrance, barriers[0]),
-            (eliteRoom.leftEntrance, barriers[1]),
-            (eliteRoom.rightEntrance, barriers[1])
+            (room.topEntrance, barriers[0]),
+            (room.bottomEntrance, barriers[0]),
+            (room.leftEntrance, barriers[1]),
+            (room.rightEntrance, barriers[1])
         };
 
         foreach (var (entrance, prefab) in barrierPlace)
@@ -51,9 +36,8 @@ public class EliteRoomSetup : MonoBehaviour
             if (entrance == Vector2Int.zero) continue;
             var placedBarrier = PlaceCenterCell(prefab, entrance, barrierParent);
             placedBarrier.SetActive(false);
-            barrierList.Add(placedBarrier);
+            room.AddBarrier(placedBarrier);
         }
-        return barrierList;
     }
 
     private GameObject PlaceCenterCell(GameObject obj, Vector2Int position, Transform parent)

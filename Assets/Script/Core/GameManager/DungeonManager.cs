@@ -22,8 +22,4 @@ public class DungeonManager : MonoBehaviour
     }
     #endregion
 
-    public void OpenRoomBarrier(Room room)
-    {
-        Destroy(room.barrierReference);
-    }    
 }

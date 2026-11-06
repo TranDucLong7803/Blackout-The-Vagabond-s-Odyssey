@@ -21,11 +21,11 @@ public class DungeonController : AbstractDungeonGenerator
             player = GameObject.FindGameObjectWithTag("Player")?.transform;
         if (player == null) return;
 
-        var playerTile = Vector2Int.FloorToInt(player.position);
+        Vector2 position = player.position;
         foreach (var room in DungeonData.rooms)
         {
-            if (room.enemyCount > 0 && !room.IsCombatActive && room.roomTiles.Contains(playerTile))
-                room.ActivateCombat();
+            if (room.enemyCount > 0 && !room.IsCombatActive && room.Interior.Contains(position))
+                room.LockDoors();
         }
     }
 
@@ -49,19 +49,13 @@ public class DungeonController : AbstractDungeonGenerator
                     break;
 
                 case RoomType.Normal:
-                    propPlacer.PlaceNearWallProps(room);
-                    propPlacer.PlaceInnerProps(room);
-                    propPlacer.PlaceTraps(room);
-                    agentPlacer.PlaceAgents(room);
-                    break;
-
                 case RoomType.Elite:
                     propPlacer.PlaceNearWallProps(room);
                     propPlacer.PlaceInnerProps(room);
                     propPlacer.PlaceTraps(room);
                     agentPlacer.PlaceAgents(room);
 
-                    eliteRoomSetup.SetupEliteRoom(room, playerSpawner);
+                    if (room.enemyCount > 0) eliteRoomSetup.SetupCombatRoom(room);
                     break;
 
                 case RoomType.Treasure:

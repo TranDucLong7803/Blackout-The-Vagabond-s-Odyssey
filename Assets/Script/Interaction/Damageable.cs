@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using Pathfinding;
 using UnityEngine;
 
@@ -9,8 +8,6 @@ public class Damageable : MonoBehaviour, IDamageable
     public int health = 3;
     private Lootable lootable;
     private bool isBreaking;
-
-    public event Action BrokenByPlayer;
 
     private void Awake()
     {
@@ -27,14 +24,6 @@ public class Damageable : MonoBehaviour, IDamageable
         isBreaking = true;
         if (lootable != null) lootable.DropLoot();
         StartCoroutine(UpdateGraphAndDestroy());
-    }
-
-    public void TakePlayerDamage(int damage)
-    {
-        bool wasBreaking = isBreaking;
-        takeDame(damage);
-        if (!wasBreaking && isBreaking)
-            BrokenByPlayer?.Invoke();
     }
 
     private IEnumerator UpdateGraphAndDestroy()

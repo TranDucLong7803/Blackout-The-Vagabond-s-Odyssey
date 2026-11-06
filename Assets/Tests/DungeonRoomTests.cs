@@ -43,10 +43,12 @@ public class DungeonRoomTests
             var meleeHealth = melee.GetComponent(GameType("EnemyHealth"));
             Invoke(controller, "Update");
             Assert.That(IsActive(firstRoom), Is.False);
+            Assert.That(IsLocked(firstRoom), Is.False);
             var spawn = (IEnumerator)Invoke(spawner, "DelayPlayer");
             Assert.That(spawn.MoveNext(), Is.True);
             Assert.That(spawn.MoveNext(), Is.False);
             Assert.That(player.transform.position, Is.EqualTo(spawnerObject.transform.position));
+            Assert.That(Invoke(meleeAi, "GetChasePosition", player.transform.position), Is.EqualTo(new Vector3(8.5f, 10.5f)));
 
             Invoke(meleeHealth, "takeDame", 1);
             Invoke(controller, "Update");
@@ -59,11 +61,17 @@ public class DungeonRoomTests
 
             player.transform.position = new Vector3(8.25f, 10.5f);
             Invoke(controller, "Update");
+            Assert.That(IsActive(firstRoom), Is.False, "The player is still crossing the threshold.");
+            Assert.That(IsLocked(firstRoom), Is.False);
+
+            player.transform.position = new Vector3(8.75f, 10.5f);
+            Invoke(controller, "Update");
             Invoke(meleeAi, "Update");
             Invoke(melee, "Update");
             Invoke(rangedAi, "Update");
             Invoke(ranged, "Update");
             Assert.That(IsActive(firstRoom), Is.True);
+            Assert.That(IsLocked(firstRoom), Is.True);
             Assert.That(GetField(meleeAi, "chasePlayer"), Is.True);
             Assert.That(GetField(melee, "isAttacking"), Is.True);
             Assert.That(melee.GetComponent<Animator>().GetBool("isWalk"), Is.True);
@@ -76,7 +84,7 @@ public class DungeonRoomTests
             Assert.That(IsActive(firstRoom), Is.True);
             Assert.That(IsActive(secondRoom), Is.False);
 
-            player.transform.position = new Vector3(14.25f, 10.5f);
+            player.transform.position = new Vector3(14.75f, 10.5f);
             Invoke(controller, "Update");
             Invoke(rangedAi, "Update");
             Invoke(ranged, "Update");
@@ -95,56 +103,37 @@ public class DungeonRoomTests
         }
     }
 
-    [UnityTest]
-    public IEnumerator AGeneratedDoorOnlyWakesItsRoomWhenBrokenByPlayerDamage()
+    [Test]
+    public void GeneratedEntrancesStayOpenAndAnEmptyRoomDoesNotLock()
     {
         var pathField = GameType("DungeonData").GetField("path");
         var previousPath = pathField.GetValue(null);
-        var previousRandomState = UnityEngine.Random.state;
-        var firstRoom = CreateRoom(new Vector2Int(10, 10));
-        var secondRoom = CreateRoom(new Vector2Int(16, 10));
-        pathField.SetValue(null, new HashSet<Vector2Int> { new(10, 13), new(16, 13) });
-        var root = new GameObject("Room test doors");
+        var room = CreateRoom(new Vector2Int(10, 10));
+        SetField(room, "enemyCount", 0);
+        pathField.SetValue(null, new HashSet<Vector2Int> { new(10, 13), new(7, 10) });
+        var root = new GameObject("Room test entrances");
         var placer = root.AddComponent(GameType("PropPlacer"));
         SetField(placer, "propParent", root.transform);
-        SetField(placer, "doorChance", 1f);
-        SetField(placer, "doors", new[] { Load(Doors + "Door_bottom.prefab"), Load(Doors + "Door_side.prefab"), Load(Doors + "Door_top.prefab") });
 
         try
         {
-            Invoke(placer, "SetRoomEntrances", firstRoom);
-            Invoke(placer, "SetRoomEntrances", secondRoom);
-            Assert.That(root.transform.childCount, Is.EqualTo(2));
-            var firstDoor = root.transform.GetChild(0).GetComponent(GameType("Damageable"));
-            var secondDoor = root.transform.GetChild(1).GetComponent(GameType("Damageable"));
-            var weapon = Enum.Parse(GameType("AttackType"), "Weapon");
-            var playerDamage = GameType("AttackContext").GetMethod("DealPlayerDamage");
-
-            playerDamage.Invoke(null, new[] { firstDoor, (object)4, weapon });
-            Assert.That(IsActive(firstRoom), Is.False);
-
-            Invoke(secondDoor, "takeDame", 5);
-            Assert.That(IsActive(secondRoom), Is.False);
-
-            playerDamage.Invoke(null, new[] { firstDoor, (object)1, weapon });
-            Assert.That(IsActive(firstRoom), Is.True);
-            Assert.That(IsActive(secondRoom), Is.False);
-
-            float deadline = Time.realtimeSinceStartup + 2f;
-            while ((firstDoor != null || secondDoor != null) && Time.realtimeSinceStartup < deadline)
-                yield return null;
-            Assert.That(firstDoor == null && secondDoor == null, Is.True);
+            Invoke(placer, "SetRoomEntrances", room);
+            Assert.That(GetField(room, "topEntrance"), Is.EqualTo(new Vector2Int(10, 13)));
+            Assert.That(GetField(room, "leftEntrance"), Is.EqualTo(new Vector2Int(7, 10)));
+            Assert.That(root.transform.childCount, Is.Zero);
+            Invoke(room, "LockDoors");
+            Assert.That(IsActive(room), Is.False);
+            Assert.That(IsLocked(room), Is.False);
         }
         finally
         {
             Object.DestroyImmediate(root);
             pathField.SetValue(null, previousPath);
-            UnityEngine.Random.state = previousRandomState;
         }
     }
 
     [UnityTest]
-    public IEnumerator AnAwakenedEliteSpawnsBeforeBarriersCloseOnPlayerEntry()
+    public IEnumerator LockingAnEliteRoomStartsItsSpawnAnimation()
     {
         var previousTimeScale = Time.timeScale;
         Time.timeScale = 1f;
@@ -157,39 +146,109 @@ public class DungeonRoomTests
         SetField(setup, "barriers", new[] { Load(Doors + "Barrier_front.prefab"), Load(Doors + "Barrier_side.prefab") });
         SetField(setup, "triggerPrefab", Load("Assets/Asset/Prefab/Map/EliteTrigger/EliteTrigger.prefab"));
         SetField(setup, "objectParent", root.transform);
-        var player = new GameObject("Room test player") { tag = "Player" };
-        var playerCollider = player.AddComponent<BoxCollider2D>();
-        var other = new GameObject("Room test non-player");
-        var otherCollider = other.AddComponent<BoxCollider2D>();
-
         try
         {
-            Invoke(setup, "SetupEliteRoom", room, null);
+            Invoke(setup, "SetupCombatRoom", room);
             var trigger = root.GetComponentInChildren(GameType("EliteTrigger"));
             SetField(trigger, "delaySpawn", 0f);
             var barrier = root.transform.Find("Barrier").GetChild(0).gameObject;
             Assert.That(elite.activeSelf, Is.False);
             Assert.That(barrier.activeSelf, Is.False);
-            Invoke(trigger, "OnTriggerEnter2D", otherCollider);
             Assert.That(IsActive(room), Is.False);
 
-            Invoke(room, "ActivateCombat");
-            Assert.That(barrier.activeSelf, Is.False);
+            Invoke(room, "LockDoors");
+            Assert.That(barrier.activeSelf, Is.True);
             float deadline = Time.realtimeSinceStartup + 2f;
             while (!elite.activeSelf && Time.realtimeSinceStartup < deadline)
                 yield return null;
             Assert.That(elite.activeSelf, Is.True);
-            Assert.That(barrier.activeSelf, Is.False);
-
-            Invoke(trigger, "OnTriggerEnter2D", playerCollider);
             Assert.That(barrier.activeSelf, Is.True);
         }
         finally
         {
-            Object.DestroyImmediate(other);
-            Object.DestroyImmediate(player);
             Object.DestroyImmediate(root);
             Object.DestroyImmediate(elite);
+            Time.timeScale = previousTimeScale;
+        }
+    }
+
+    [UnityTest]
+    public IEnumerator OpenEntrancesSealOnPlayerEntryAndReopenAfterTheLastKill()
+    {
+        var roomsField = GameType("DungeonData").GetField("rooms");
+        var pathField = GameType("DungeonData").GetField("path");
+        var previousRooms = roomsField.GetValue(null);
+        var previousPath = pathField.GetValue(null);
+        var previousTimeScale = Time.timeScale;
+        Time.timeScale = 1f;
+        var room = CreateRoom(new Vector2Int(10, 10));
+        var rooms = Activator.CreateInstance(roomsField.FieldType);
+        Invoke(rooms, "Add", room);
+        roomsField.SetValue(null, rooms);
+        pathField.SetValue(null, new HashSet<Vector2Int> { new(10, 13), new(7, 10), new(13, 10) });
+
+        var root = new GameObject("Combat door test");
+        var placer = root.AddComponent(GameType("PropPlacer"));
+        SetField(placer, "propParent", root.transform);
+        var setup = root.AddComponent(GameType("EliteRoomSetup"));
+        SetField(setup, "barriers", new[] { Load(Doors + "Barrier_front.prefab"), Load(Doors + "Barrier_side.prefab") });
+        SetField(setup, "objectParent", root.transform);
+        var controller = (Behaviour)root.AddComponent(GameType("DungeonController"));
+        controller.enabled = false;
+        var player = new GameObject("Combat door test player") { tag = "Player" };
+
+        try
+        {
+            Invoke(placer, "SetRoomEntrances", room);
+            Assert.That(root.transform.childCount, Is.Zero);
+            Invoke(setup, "SetupCombatRoom", room);
+            var barriers = root.transform.Find("Barrier");
+            Assert.That(barriers.childCount, Is.EqualTo(3));
+            foreach (Transform barrier in barriers) Assert.That(barrier.gameObject.activeSelf, Is.False);
+
+            int doorLayer = LayerMask.GetMask("Background");
+            Physics2D.SyncTransforms();
+            Assert.That(Physics2D.Raycast(new Vector2(12.75f, 10.5f), Vector2.right, 1f, doorLayer).collider, Is.Null);
+
+            player.transform.position = new Vector3(12.75f, 10.5f);
+            Invoke(controller, "Update");
+            Assert.That(IsActive(room), Is.False);
+            Assert.That(IsLocked(room), Is.False);
+            player.transform.position = new Vector3(12.25f, 10.5f);
+            Invoke(controller, "Update");
+            Assert.That(IsLocked(room), Is.True);
+            foreach (Transform barrier in barriers)
+            {
+                Assert.That(barrier.gameObject.activeSelf, Is.True);
+                Assert.That(barrier.GetComponent(GameType("IDamageable")), Is.Null);
+                Assert.That(barrier.Find("Lock pulse").GetComponent<SpriteRenderer>().enabled, Is.True);
+            }
+
+            Physics2D.SyncTransforms();
+            Assert.That(Physics2D.Raycast(new Vector2(12.75f, 10.5f), Vector2.right, 1f, doorLayer).collider, Is.Not.Null);
+            Invoke(room, "OnEnemyDeath");
+            Assert.That(IsLocked(room), Is.True);
+            yield return new WaitForSeconds(0.4f);
+            foreach (Transform barrier in barriers)
+            {
+                Assert.That(barrier.gameObject.activeSelf, Is.True);
+                Assert.That(barrier.Find("Lock pulse").GetComponent<SpriteRenderer>().enabled, Is.False);
+            }
+
+            Invoke(room, "OnEnemyDeath");
+            Assert.That(IsLocked(room), Is.False);
+            foreach (Transform barrier in barriers) Assert.That(barrier.gameObject.activeSelf, Is.False);
+            Physics2D.SyncTransforms();
+            Assert.That(Physics2D.Raycast(new Vector2(12.75f, 10.5f), Vector2.right, 1f, doorLayer).collider, Is.Null);
+            Invoke(controller, "Update");
+            Assert.That(IsLocked(room), Is.False);
+        }
+        finally
+        {
+            roomsField.SetValue(null, previousRooms);
+            pathField.SetValue(null, previousPath);
+            Object.DestroyImmediate(player);
+            Object.DestroyImmediate(root);
             Time.timeScale = previousTimeScale;
         }
     }
@@ -220,6 +279,7 @@ public class DungeonRoomTests
     }
 
     private static bool IsActive(object room) => (bool)room.GetType().GetProperty("IsCombatActive").GetValue(room);
+    private static bool IsLocked(object room) => (bool)room.GetType().GetProperty("IsLocked").GetValue(room);
     private static GameObject Load(string path) => AssetDatabase.LoadAssetAtPath<GameObject>(path);
     private static Type GameType(string name) => Type.GetType(name + ", Assembly-CSharp", true);
     private static object GetField(object obj, string name) => obj.GetType().GetField(name, InstanceMembers).GetValue(obj);

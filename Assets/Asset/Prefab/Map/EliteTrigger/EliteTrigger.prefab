@@ -40,7 +40,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8027634013283660876}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Density: 1
   m_Material: {fileID: 0}
@@ -92,4 +92,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnAnimation: {fileID: 94982736995522470, guid: 359e35376306ef94081cb52835745302, type: 3}
-  barriers: []
