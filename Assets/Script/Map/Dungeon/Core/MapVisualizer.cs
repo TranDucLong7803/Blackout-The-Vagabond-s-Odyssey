@@ -15,9 +15,11 @@ public class MapVisualizer : MonoBehaviour
     [SerializeField] private bool usePerlinNoise = false;
     [SerializeField] private float scale = 7f; // Scale for Perlin noise
     private int noiseOffset = 0; // Offset for Perlin noise
+    public HashSet<Vector2Int> PlayableFloor { get; private set; }
     
     public void VisualizeLayout(HashSet<Vector2Int> floor)
     {
+        PlayableFloor = floor;
         var floorMap = offsetFloor(floor);
         if(foregroundTilemap != null)
         {
@@ -79,6 +81,7 @@ public class MapVisualizer : MonoBehaviour
 
     public void ClearMap()
     {
+        PlayableFloor = null;
         if (foregroundTilemap != null)
         {
             foregroundTilemap.ClearAllTiles();

@@ -293,6 +293,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1898402033915828209}
   - component: {fileID: 6217280750116750684}
+  - component: {fileID: 2954471465659821016}
   m_Layer: 0
   m_Name: Spot
   m_TagString: Untagged
@@ -367,6 +368,18 @@ MonoBehaviour:
   - {x: 0.5, y: -0.5, z: 0}
   - {x: 0.5, y: 0.5, z: 0}
   - {x: -0.5, y: 0.5, z: 0}
+--- !u!114 &2954471465659821016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2373906343537846467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b401e7728ea54169ae43512d8034ecaf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1 &2450066237139960204
 GameObject:
   m_ObjectHideFlags: 0
