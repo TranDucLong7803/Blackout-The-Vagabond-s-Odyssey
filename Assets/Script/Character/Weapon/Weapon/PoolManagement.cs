@@ -62,6 +62,16 @@ public class PoolManagement : MonoBehaviour
     }
 
 
+    public void PlayBulletImpact(BulletImpact prefab, Vector3 position, bool damageable)
+    {
+        var key = prefab.gameObject;
+        if (!bulletPools.ContainsKey(key))
+            bulletPools.Add(key, new Queue<GameObject>());
+
+        var effect = GetBullet(key).GetComponent<BulletImpact>();
+        effect.Play(this, key, position, damageable);
+    }
+
     public void ReturnBullet(GameObject bullet, GameObject bulletPrefab)
     {
         bullet.SetActive(false);

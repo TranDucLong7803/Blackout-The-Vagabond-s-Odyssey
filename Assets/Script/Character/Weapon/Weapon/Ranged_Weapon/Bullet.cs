@@ -1,27 +1,45 @@
-﻿using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 public class Bullet : MonoBehaviour
 {
+    [SerializeField] private BulletImpact impactPrefab;
     public RangedWeapon weapon;
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {        
-        // if (enemy != null)
-        if(collision.gameObject.TryGetComponent<IDamageable>(out var enemy))
-        {
-            AttackContext.CurrentAttackType = AttackType.Weapon;
-            enemy.takeDame(weapon.dam);
-          
-            PoolManagement.Instance.ReturnBullet(gameObject, weapon.bulletPrefab);
-        }
+    private Collider2D hitCollider;
+    private bool hasHit;
 
-        else PoolManagement.Instance.ReturnBullet(gameObject, weapon.bulletPrefab);     
-        //vuong: any collision obstacle, disable bullet
-        // this.gameObject.SetActive(false);
-
+    private void Awake()
+    {
+        hitCollider = GetComponent<Collider2D>();
     }
 
+    private void OnEnable()
+    {
+        hasHit = false;
+    }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (hasHit || weapon == null) return;
+        hasHit = true;
+
+        var pool = PoolManagement.Instance;
+        var bulletPrefab = weapon.bulletPrefab;
+        bool damageable = collision.TryGetComponent<IDamageable>(out var target);
+
+        if (impactPrefab != null)
+        {
+            var contact = hitCollider.Distance(collision);
+            Vector2 point = contact.isValid ? contact.pointB : collision.ClosestPoint(transform.position);
+            pool.PlayBulletImpact(impactPrefab, new Vector3(point.x, point.y, transform.position.z), damageable);
+        }
+
+        if (damageable)
+        {
+            AttackContext.CurrentAttackType = AttackType.Weapon;
+            target.takeDame(weapon.dam);
+        }
+
+        pool.ReturnBullet(gameObject, bulletPrefab);
+    }
 }
