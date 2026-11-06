@@ -10,8 +10,11 @@ public class SettingsMenuUI : MonoBehaviour, IUIScreen
     [SerializeField] private GameObject settingsPanel;
     [SerializeField] private Slider musicSlider;
     [SerializeField] private Slider sfxSlider;
+    [SerializeField] private GameObject settingsContent;
+    [SerializeField] private Button controlsButton;
 
     [SerializeField] private SoundMixerManager soundMixerManager;
+    private ControlsMenuUI controlsMenu;
 
     private const string MusicKey = "MusicVolume";
     private const string SFXKey = "SoundFXVolume";
@@ -57,7 +60,20 @@ public class SettingsMenuUI : MonoBehaviour, IUIScreen
     public void Close()
     {
         settingsPanel.SetActive(false);
+        if (controlsMenu != null) controlsMenu.Hide();
         Time.timeScale = 1f;
+    }
+
+    public void ShowControls()
+    {
+        if (controlsMenu == null)
+            controlsMenu = ControlsMenuUI.Create((RectTransform)settingsPanel.transform, settingsContent, controlsButton);
+        controlsMenu.Show();
+    }
+
+    public bool TryHandleControlsCancel()
+    {
+        return controlsMenu != null && controlsMenu.TryHandleCancel();
     }
 
     public void ResumeGame()

@@ -5,6 +5,7 @@ public class InputManager : MonoBehaviour
 {
     public PlayerControls playerInput { get; private set; }
     public static InputManager Instance { get; private set; }
+    internal ControlBindings Bindings { get; private set; }
 
     private bool suppressAttackUntilReleased;
     private int lastInteractionFrame = -1;
@@ -35,6 +36,7 @@ public class InputManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         playerInput = new PlayerControls();
+        Bindings = new ControlBindings(playerInput);
     }
 
     private void OnEnable()

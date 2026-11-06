@@ -17,6 +17,7 @@ public class PlayerControlTests
     private InputSettings.EditorInputBehaviorInPlayMode previousEditorInputBehavior;
     private bool previousRunInBackground;
     private float previousTimeScale;
+    private string previousBindingOverrides;
 
     [SetUp]
     public void SetUp()
@@ -33,6 +34,9 @@ public class PlayerControlTests
         InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
         keyboard = InputSystem.AddDevice<Keyboard>();
         mouse = InputSystem.AddDevice<Mouse>();
+        var actions = GetActions();
+        previousBindingOverrides = actions.SaveBindingOverridesAsJson();
+        actions.RemoveAllBindingOverrides();
         SetField(GetInputManager(), "lastInteractionFrame", -1);
     }
 
@@ -46,6 +50,7 @@ public class PlayerControlTests
         InputSystem.settings.editorInputBehaviorInPlayMode = previousEditorInputBehavior;
         Application.runInBackground = previousRunInBackground;
         Time.timeScale = previousTimeScale;
+        GetActions().LoadBindingOverridesFromJson(previousBindingOverrides);
     }
 
     [Test]
@@ -197,6 +202,101 @@ public class PlayerControlTests
             Object.DestroyImmediate(events.gameObject);
             Object.DestroyImmediate(settingsRoot);
             Object.DestroyImmediate(ui.gameObject);
+        }
+    }
+
+    [Test]
+    public void RebindingFromSettingsAppliesPersistsAndResetsControls()
+    {
+        const string prefsKey = "KeyboardMouseBindingOverrides";
+        var actions = GetActions();
+        string originalPreference = PlayerPrefs.HasKey(prefsKey) ? PlayerPrefs.GetString(prefsKey) : null;
+        var ui = new GameObject("Controls test manager").AddComponent(GameType("UIManager"));
+        var controller = ui.gameObject.AddComponent(GameType("UIController"));
+        var canvas = new GameObject("Controls test canvas", typeof(Canvas));
+        var panel = new GameObject("Settings panel", typeof(RectTransform));
+        panel.transform.SetParent(canvas.transform, false);
+        var settings = panel.AddComponent(GameType("SettingsMenuUI"));
+        var content = new GameObject("Settings content", typeof(RectTransform));
+        content.transform.SetParent(panel.transform, false);
+        var controlsButton = new GameObject("Controls", typeof(RectTransform), typeof(Button)).GetComponent<Button>();
+        controlsButton.transform.SetParent(content.transform, false);
+        var events = new GameObject("Controls test events").AddComponent<EventSystem>();
+        SetField(settings, "settingsPanel", panel);
+        SetField(settings, "settingsContent", content);
+        SetField(settings, "controlsButton", controlsButton);
+        panel.SetActive(false);
+
+        try
+        {
+            PressUIKey(controller, Key.Escape);
+            SetInput(default, default);
+            Invoke(settings, "ShowControls");
+
+            var screen = panel.transform.Find("Controls Screen");
+            var move = screen.Find("Controls panel/Move up/Move up primary").GetComponent<Button>();
+            var attack = screen.Find("Controls panel/Attack/Attack primary").GetComponent<Button>();
+            var reset = screen.Find("Controls panel/Reset defaults").GetComponent<Button>();
+
+            move.onClick.Invoke();
+            PressUIKey(controller, Key.Escape);
+            Assert.That(screen.gameObject.activeSelf, Is.True);
+            Assert.That(Time.timeScale, Is.Zero);
+
+            SetInput(default, default);
+            move.onClick.Invoke();
+            SetInput(new KeyboardState(Key.F), default);
+            Assert.That(actions["Ingame/Move"].bindings[2].overridePath, Is.Null);
+
+            SetInput(default, default);
+            move.onClick.Invoke();
+            SetInput(new KeyboardState(Key.R), default);
+            Assert.That(actions["Ingame/Move"].bindings[2].effectivePath, Is.EqualTo("<Keyboard>/r").IgnoreCase);
+            Assert.That(actions["Ingame/Move"].bindings[3].effectivePath, Is.EqualTo("<Keyboard>/upArrow").IgnoreCase);
+
+            SetInput(default, default);
+            attack.onClick.Invoke();
+            SetInput(default, new MouseState().WithButton(MouseButton.Right));
+            Assert.That(actions["Ingame/Attack"].bindings[1].effectivePath, Is.EqualTo("<Mouse>/rightButton").IgnoreCase);
+
+            using (var reloaded = (IDisposable)Activator.CreateInstance(GameType("PlayerControls")))
+            {
+                Activator.CreateInstance(GameType("ControlBindings"), reloaded);
+                var reloadedActions = (IInputActionCollection2)reloaded;
+                Assert.That(reloadedActions.FindAction("Ingame/Move").bindings[2].effectivePath,
+                    Is.EqualTo("<Keyboard>/r").IgnoreCase);
+                Assert.That(reloadedActions.FindAction("Ingame/Attack").bindings[1].effectivePath,
+                    Is.EqualTo("<Mouse>/rightButton").IgnoreCase);
+            }
+
+            screen.Find("Controls panel/Back").GetComponent<Button>().onClick.Invoke();
+            Assert.That(content.activeInHierarchy, Is.True);
+            Assert.That(events.currentSelectedGameObject, Is.EqualTo(controlsButton.gameObject));
+            Assert.That(Time.timeScale, Is.Zero);
+            Invoke(settings, "ResumeGame");
+
+            SetInput(default, default);
+            SetInput(new KeyboardState(Key.R), new MouseState().WithButton(MouseButton.Right));
+            Assert.That(actions["Ingame/Move"].ReadValue<Vector2>(), Is.EqualTo(Vector2.up));
+            Assert.That(actions["Ingame/Attack"].IsPressed(), Is.True);
+
+            PressUIKey(controller, Key.Escape);
+            Invoke(settings, "ShowControls");
+            reset.onClick.Invoke();
+            Assert.That(PlayerPrefs.HasKey(prefsKey), Is.True);
+            reset.onClick.Invoke();
+            Assert.That(PlayerPrefs.HasKey(prefsKey), Is.False);
+            Assert.That(actions["Ingame/Move"].bindings[2].overridePath, Is.Null);
+            Assert.That(actions["Ingame/Attack"].bindings[1].overridePath, Is.Null);
+        }
+        finally
+        {
+            Object.DestroyImmediate(canvas);
+            Object.DestroyImmediate(events.gameObject);
+            Object.DestroyImmediate(ui.gameObject);
+            if (originalPreference != null) PlayerPrefs.SetString(prefsKey, originalPreference);
+            else PlayerPrefs.DeleteKey(prefsKey);
+            PlayerPrefs.Save();
         }
     }
 

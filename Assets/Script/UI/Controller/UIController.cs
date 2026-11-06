@@ -16,6 +16,8 @@ public class UIController : MonoBehaviour
         var input = InputManager.Instance.playerInput.Menu;
         if (input.Cancel.WasPressedThisFrame())
         {
+            if (ui.OpenedScreen is SettingsMenuUI settings && settings.TryHandleControlsCancel()) return;
+
             if (ui.OpenedScreen != null)
                 ui.CloseCurrentScreen();
             else if (SettingsMenuUI.Instance != null)
