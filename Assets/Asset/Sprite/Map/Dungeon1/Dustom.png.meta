@@ -135,6 +135,19 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: iOS
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
@@ -2067,6 +2080,7 @@ TextureImporter:
       Wall_bottom_middle2: 418858539
       Wall_bottom_middle3: 1919942601
       Wall_top_corner1_left: 1648665766
+      Wall_top_corner2_lef: -993504365
       Wall_top_corner2_right: 1412007094
       Wall_top_corner_left: 1201982506
       Wall_top_middle: -1705398474
